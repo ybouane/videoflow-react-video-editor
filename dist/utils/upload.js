@@ -1,0 +1,1 @@
+function c(){const e=[];return{async upload(r){const t=URL.createObjectURL(r);return e.push(t),t},revokeAll(){for(const r of e)try{URL.revokeObjectURL(r)}catch{}e.length=0}}}export{c as createDefaultUploadTracker};

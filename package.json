@@ -1,0 +1,50 @@
+{
+  "name": "@videoflow/react-video-editor",
+  "version": "1.2.0",
+  "description": "Production-grade React video editor for VideoFlow — timeline, live preview, keyframes, undo/redo.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "author": "ybouane",
+  "keywords": [
+    "video",
+    "editor",
+    "react",
+    "timeline",
+    "keyframes",
+    "videoflow"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "LICENSE.md",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ybouane/videoflow-react-video-editor.git"
+  },
+  "homepage": "https://videoflow.dev/react-video-editor",
+  "bugs": {
+    "url": "https://github.com/ybouane/videoflow-react-video-editor/issues"
+  },
+  "peerDependencies": {
+    "@videoflow/core": "^1.2.0",
+    "@videoflow/renderer-browser": "^1.2.0",
+    "@videoflow/renderer-dom": "^1.2.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@uiw/react-color": "^2.10.1",
+    "immer": "^10.1.1",
+    "zustand": "^5.0.2"
+  }
+}

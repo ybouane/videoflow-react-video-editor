@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# Binary media assets — copied from /var/projects/VideoFlow/examples/ at dev time
+public/sample.*

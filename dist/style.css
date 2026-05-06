@@ -1,0 +1,2119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/*
+ * @videoflow/react-video-editor — default stylesheet.
+ *
+ * Conventions (Setup.md):
+ *   - Vanilla CSS only, no class-based selectors.
+ *   - Custom HTML elements (`vf-*`) with nested rules.
+ *   - All theming via `--vf-*` CSS variables on the outer `vf-editor`.
+ *
+ * CRITICAL: unknown custom elements default to `display: inline`, which
+ * makes most of our layout wrong. Every `vf-*` element that participates
+ * in layout has an explicit `display` set.
+ */
+
+/*
+ * All rules scope under `vf-editor[data-theme][data-theme][data-theme]`.
+ *
+ * The `[data-theme]` attribute is always present on the root (VideoEditor.tsx
+ * defaults it to `"dark"`), and CSS counts *every* attribute selector in a
+ * compound — even repeats of the same one — toward specificity. Writing it
+ * three times compounds cheaply to (0,3,1) without changing what the selector
+ * matches. With native nesting, `:is(<outer>) <inner>` inherits that, so
+ * every nested rule ends up at (0,3,N).
+ *
+ * Why triple instead of single: the single-attribute form (0,1,1) loses to
+ * common host rules like `.form input[type="text"]` (0,2,1) or
+ * `input[type="text"], textarea, select` applied with a wrapper class. Triple
+ * buys (0,3,N) headroom — enough to beat any host rule short of an id,
+ * `!important`, or inline style, without reaching for a shadow root.
+ *
+ * Downstream: every nested rule here (e.g. `input`) resolves to
+ * `:is(vf-editor[data-theme][data-theme][data-theme]) input` = (0,3,2), which
+ * beats `.a.b input[type="text"]` (0,2,2) and below. Bump the repeat count
+ * if you ever need more headroom.
+ */
+vf-editor[data-theme][data-theme][data-theme] {
+	/* ================================================================
+	 *  Design tokens — override any of these on your own `vf-editor`
+	 *  to re-theme the editor.
+	 * ================================================================ */
+	/* Default theme = Molten Core (matches videoflow.dev): neutral near-black
+	 * panels with restrained orange/red accents. Panels/surfaces are true
+	 * greys (R=G=B) so the base reads clean against the warm accent signal —
+	 * override any of these on your own `vf-editor` to re-theme. */
+	--vf-bg: #0a0a0a;
+	--vf-panel: #171717;
+	--vf-panel-2: #1d1d1d;
+	--vf-panel-border: #2a2a2a;
+	--vf-surface: #222222;
+	--vf-surface-2: #282828;
+	--vf-surface-hover: #313131;
+	--vf-surface-active: #3b3b3b;
+
+	--vf-text: #f5f5f5;
+	--vf-text-dim: #a6a6a6;
+	--vf-text-mute: #666666;
+
+	--vf-primary: #ff5a1f;
+	--vf-primary-hover: #ff7a47;
+	--vf-primary-fg: #ffffff;
+
+	--vf-accent: #ff2d20;
+	--vf-warn: #f59e0b;
+	--vf-danger: #ff4d4d;
+
+	--vf-selection: #ff5a1f;
+	--vf-selection-dim: rgba(255, 90, 31, 0.18);
+	--vf-selection-ring: rgba(255, 90, 31, 0.55);
+	--vf-playhead: #ff2d20;
+	--vf-magnet: #f59e0b;
+
+	--vf-preview-bg: radial-gradient(circle at center, #171717 0%, #0a0a0a 100%);
+
+	--vf-radius: 8px;
+	--vf-radius-sm: 5px;
+	--vf-radius-lg: 10px;
+	--vf-gap: 8px;
+	--vf-gap-sm: 4px;
+	--vf-panel-gap: 4px;
+
+	--vf-titlebar-height: 48px;
+	--vf-sidebar-width: 320px;
+	--vf-playbar-height: 38px;
+	--vf-timeline-height: 280px;
+	--vf-track-height: 40px;
+	--vf-ruler-height: 26px;
+	--vf-timeline-header-width: 180px;
+
+	--vf-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--vf-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+	/* ================================================================
+	 *  Themes — override tokens per `data-theme`.
+	 *  Default (no attribute) matches `data-theme="dark"`.
+	 * ================================================================ */
+	&[data-theme='light'] {
+		--vf-bg: #f5f6f8;
+		--vf-panel: #ffffff;
+		--vf-panel-2: #f1f3f5;
+		--vf-panel-border: #d7dbe0;
+		--vf-surface: #eef0f3;
+		--vf-surface-2: #e4e7eb;
+		--vf-surface-hover: #dde1e6;
+		--vf-surface-active: #ccd2d9;
+
+		--vf-text: #1a1d22;
+		--vf-text-dim: #5b6370;
+		--vf-text-mute: #8b919b;
+
+		--vf-primary: #5457e8;
+		--vf-primary-hover: #4245d4;
+		--vf-primary-fg: #ffffff;
+
+		--vf-accent: #15a34a;
+		--vf-warn: #d97706;
+		--vf-danger: #dc2626;
+
+		--vf-selection: #5457e8;
+		--vf-selection-dim: rgba(84, 87, 232, 0.15);
+		--vf-selection-ring: rgba(84, 87, 232, 0.5);
+		--vf-playhead: #dc2626;
+		--vf-magnet: #d97706;
+
+		--vf-preview-bg: radial-gradient(circle at center, #bebebe 0%, #c4c4c4 100%);
+	}
+
+	&[data-theme='grey'] {
+		--vf-bg: #2d3036;
+		--vf-panel: #373a41;
+		--vf-panel-2: #3f434b;
+		--vf-panel-border: #4a4f58;
+		--vf-surface: #484d56;
+		--vf-surface-2: #525863;
+		--vf-surface-hover: #5d636f;
+		--vf-surface-active: #6a7180;
+
+		--vf-text: #e8eaed;
+		--vf-text-dim: #b2b7bf;
+		--vf-text-mute: #858b95;
+
+		--vf-primary: #818cf8;
+		--vf-primary-hover: #9ba4fa;
+		--vf-primary-fg: #1a1d22;
+
+		--vf-accent: #34d399;
+		--vf-warn: #fbbf24;
+		--vf-danger: #f87171;
+
+		--vf-selection: #818cf8;
+		--vf-selection-dim: rgba(129, 140, 248, 0.2);
+		--vf-selection-ring: rgba(129, 140, 248, 0.55);
+		--vf-playhead: #f87171;
+		--vf-magnet: #fbbf24;
+
+		--vf-preview-bg: radial-gradient(circle at center, #4a4e57 0%, #2d3036 100%);
+	}
+
+	&[data-theme='night'] {
+		--vf-bg: #0a0f1f;
+		--vf-panel: #0f1628;
+		--vf-panel-2: #131c32;
+		--vf-panel-border: #1e2a47;
+		--vf-surface: #172340;
+		--vf-surface-2: #1e2d4f;
+		--vf-surface-hover: #26385f;
+		--vf-surface-active: #2f4472;
+
+		--vf-text: #dbe5ff;
+		--vf-text-dim: #8fa0c7;
+		--vf-text-mute: #60719a;
+
+		--vf-primary: #60a5fa;
+		--vf-primary-hover: #93bcfc;
+		--vf-primary-fg: #0a0f1f;
+
+		--vf-accent: #38bdf8;
+		--vf-warn: #fbbf24;
+		--vf-danger: #f87171;
+
+		--vf-selection: #60a5fa;
+		--vf-selection-dim: rgba(96, 165, 250, 0.2);
+		--vf-selection-ring: rgba(96, 165, 250, 0.55);
+		--vf-playhead: #f87171;
+		--vf-magnet: #fbbf24;
+
+		--vf-preview-bg: radial-gradient(circle at center, #0f1628 0%, #05080f 100%);
+	}
+
+	/* ================================================================
+	 *  Layout — grid shell
+	 * ================================================================ */
+	display: grid;
+	grid-template-rows: var(--vf-titlebar-height) 1fr var(--vf-playbar-height) clamp(120px, var(--vf-timeline-height), calc(100% - 260px));
+	grid-template-columns: 1fr var(--vf-sidebar-width);
+	grid-template-areas:
+		"titlebar titlebar"
+		"preview  sidebar"
+		"playbar  sidebar"
+		"timeline timeline";
+	gap: var(--vf-panel-gap);
+	padding: var(--vf-panel-gap);
+	width: 100%;
+	height: 100%;
+	min-height: 500px;
+	background: var(--vf-bg);
+	color: var(--vf-text);
+	font-family: var(--vf-font);
+	font-size: 13px;
+	line-height: 1.4;
+	user-select: none;
+	overflow: hidden;
+	position: relative;
+	box-sizing: border-box;
+
+	*, *::before, *::after {
+		box-sizing: border-box;
+	}
+
+	/* ================================================================
+	 *  CSS isolation — shield editor from host-page author styles.
+	 *
+	 *  Host pages may ship rules like `input[type="text"] { border: 5px }`
+	 *  that would otherwise bleed into the editor's form controls (they
+	 *  don't inherit border/background, so they're the primary leak path).
+	 *
+	 *  Every selector in this file is prefixed with
+	 *  `vf-editor[data-theme][data-theme][data-theme]` (see the outer block),
+	 *  so this reset resolves to that selector + `input` etc. — specificity
+	 *  (0,3,2) — which beats host rules like `.form input[type="text"]`
+	 *  (0,2,2) or `input[type="text"], textarea, select` (0,1,1).
+	 *  `all: revert` drops the matching author style back to the UA default,
+	 *  and our more-specific nested rules (e.g. `vf-input-text input`,
+	 *  (0,3,3)) win on top.
+	 *
+	 *  Best-effort only: host rules that still out-specify us (e.g. an id
+	 *  selector) or use `!important` can still win. For hard isolation,
+	 *  mount the editor inside a shadow root.
+	 * ================================================================ */
+	input, textarea, select, button, a, label, fieldset, legend {
+		all: revert;
+		font-family: inherit;
+		font-size: inherit;
+		color: inherit;
+		box-sizing: border-box;
+	}
+
+	/* ================================================================
+	 *  Buttons & icons (shared across panels)
+	 * ================================================================ */
+	button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		background: var(--vf-surface);
+		color: var(--vf-text);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius);
+		padding: 6px 12px;
+		cursor: pointer;
+		font-size: 12px;
+		font-family: inherit;
+		font-weight: 500;
+		transition: background 0.12s, border-color 0.12s;
+		white-space: nowrap;
+
+		&:hover:not([disabled]) {
+			background: var(--vf-surface-hover);
+			border-color: var(--vf-surface-active);
+		}
+
+		&:active:not([disabled]) {
+			background: var(--vf-surface-active);
+		}
+
+		&[disabled] {
+			opacity: 0.4;
+			cursor: default;
+		}
+
+		&[data-variant="primary"] {
+			background: var(--vf-primary);
+			border-color: var(--vf-primary);
+			color: var(--vf-primary-fg);
+
+			&:hover:not([disabled]) {
+				background: var(--vf-primary-hover);
+				border-color: var(--vf-primary-hover);
+			}
+		}
+
+		&[data-variant="icon"] {
+			padding: 0;
+			width: 30px;
+			height: 30px;
+			background: transparent;
+			border-color: transparent;
+			color: var(--vf-text-dim);
+
+			&:hover:not([disabled]) {
+				background: var(--vf-surface);
+				color: var(--vf-text);
+			}
+		}
+
+		&[data-variant="ghost"] {
+			background: transparent;
+			border-color: transparent;
+			color: var(--vf-text-dim);
+
+			&:hover:not([disabled]) {
+				background: var(--vf-surface);
+				color: var(--vf-text);
+			}
+		}
+	}
+
+	/* ================================================================
+	 *  Titlebar
+	 * ================================================================ */
+	vf-titlebar {
+		grid-area: titlebar;
+		display: flex;
+		align-items: center;
+		gap: var(--vf-gap);
+		padding: 0 14px;
+		background: var(--vf-panel);
+		border-radius: var(--vf-radius-lg);
+
+		vf-titlebar-brand {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-weight: 600;
+			color: var(--vf-text);
+			margin-right: 8px;
+
+			vf-logo-dot {
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, var(--vf-primary), var(--vf-accent));
+			}
+		}
+
+		vf-titlebar-name {
+			display: flex;
+			align-items: center;
+			flex: 1;
+			min-width: 0;
+
+			input {
+				background: transparent;
+				border: 1px solid transparent;
+				color: var(--vf-text);
+				font-family: inherit;
+				font-size: 13px;
+				font-weight: 500;
+				padding: 4px 8px;
+				border-radius: var(--vf-radius);
+				width: 100%;
+				max-width: 260px;
+				min-width: 0;
+				outline: none;
+
+				&:hover {
+					background: var(--vf-surface);
+				}
+
+				&:focus {
+					background: var(--vf-surface);
+					border-color: var(--vf-primary);
+				}
+			}
+		}
+
+		vf-titlebar-controls {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		vf-titlebar-time {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-variant-numeric: tabular-nums;
+			font-family: var(--vf-font-mono);
+			font-size: 12px;
+			color: var(--vf-text-dim);
+			padding: 0 10px;
+		}
+	}
+
+	/* ================================================================
+	 *  Preview panel
+	 * ================================================================ */
+	vf-preview {
+		grid-area: preview;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		background: var(--vf-preview-bg);
+		border-radius: var(--vf-radius-lg);
+		overflow: hidden;
+		/* Pan/zoom interaction (middle-drag sets data-panning on this element). */
+		touch-action: none;
+
+		&[data-panning='true'] {
+			cursor: grabbing;
+
+			vf-preview-stage,
+			vf-preview-overlay {
+				pointer-events: none;
+			}
+		}
+
+		vf-preview-stage-wrap {
+			display: flex;
+			position: relative;
+			align-items: center;
+			justify-content: center;
+			/* Zoom/pan transform is written inline from Preview.tsx.
+			   Keeping `will-change` here lets the compositor hoist it. */
+			will-change: transform;
+		}
+
+		vf-preview-stage {
+			position: relative;
+			display: block;
+			box-shadow: 0 0px 40px rgba(0, 0, 0, 0.5);
+			border-radius: var(--vf-radius);
+            overflow: hidden;
+
+			/* Group editing surface — the project background no longer applies
+			   so we draw a transparency checker behind the children to make it
+			   obvious the canvas is going to composite onto its parent. */
+			&[data-in-group='true'] {
+				background-color: #2b2b2b;
+				background-image:
+					linear-gradient(45deg, #3d3d3d 25%, transparent 25%),
+					linear-gradient(-45deg, #3d3d3d 25%, transparent 25%),
+					linear-gradient(45deg, transparent 75%, #3d3d3d 75%),
+					linear-gradient(-45deg, transparent 75%, #3d3d3d 75%);
+				background-size: 20px 20px;
+				background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+			}
+		}
+
+		vf-preview-overlay {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+		}
+
+		vf-preview-selection {
+			position: absolute;
+			border: 1.5px solid var(--vf-selection);
+			box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 14px var(--vf-selection-ring);
+			pointer-events: auto;
+			cursor: move;
+			box-sizing: border-box;
+
+			vf-preview-selection-handle {
+				position: absolute;
+				display: block;
+				width: 10px;
+				height: 10px;
+				background: var(--vf-primary);
+				border: 1.5px solid #fff;
+				border-radius: 2px;
+				pointer-events: auto;
+
+				&[data-corner="tl"] { top: -6px; left: -6px; cursor: nwse-resize; }
+				&[data-corner="tr"] { top: -6px; right: -6px; cursor: nesw-resize; }
+				&[data-corner="bl"] { bottom: -6px; left: -6px; cursor: nesw-resize; }
+				&[data-corner="br"] { bottom: -6px; right: -6px; cursor: nwse-resize; }
+			}
+		}
+
+		vf-preview-guides {
+			position: absolute;
+			pointer-events: none;
+			top: 0;
+			bottom: 0;
+			left: 0;
+			width: 1px;
+			background: var(--vf-magnet);
+			box-shadow: 0 0 8px var(--vf-magnet);
+			display: none;
+
+			&[data-visible="true"] {
+				display: block;
+			}
+		}
+	}
+
+	/* ================================================================
+	 *  Sidebar inspector
+	 * ================================================================ */
+	vf-sidebar {
+		grid-area: sidebar;
+		display: flex;
+		flex-direction: column;
+		background: var(--vf-panel);
+		border-radius: var(--vf-radius-lg);
+		overflow-y: auto;
+		overflow-x: hidden;
+
+		&::-webkit-scrollbar {
+			width: 10px;
+		}
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		&::-webkit-scrollbar-thumb {
+			background: var(--vf-surface);
+			border-radius: 5px;
+			border: 2px solid var(--vf-panel);
+		}
+		&::-webkit-scrollbar-thumb:hover {
+			background: var(--vf-surface-hover);
+		}
+
+		vf-sidebar-header {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			padding: 14px 16px 10px;
+			border-bottom: 1px solid var(--vf-panel-border);
+			background: var(--vf-panel);
+			position: sticky;
+			top: 0;
+			z-index: 2;
+
+			vf-sidebar-eyebrow {
+				display: block;
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: var(--vf-text-mute);
+				font-weight: 600;
+			}
+
+			vf-sidebar-header-row {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				min-width: 0;
+			}
+
+			vf-sidebar-breadcrumbs {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 2px 4px;
+				font-size: 11px;
+				color: var(--vf-text-mute);
+				padding: 4px 0 8px;
+				line-height: 1.4;
+
+				vf-sidebar-breadcrumb {
+					display: inline-flex;
+					align-items: center;
+
+					&[data-current='true'] {
+						color: var(--vf-text);
+						font-weight: 600;
+					}
+
+					span { opacity: 0.6; padding: 0 2px; }
+				}
+			}
+
+			vf-sidebar-tabs {
+				display: flex;
+				align-items: center;
+				gap: 2px;
+				margin-top: 4px;
+				border-top: 1px solid var(--vf-panel-border);
+				padding-top: 8px;
+
+				button[data-variant="ghost"] {
+					flex: 1;
+					height: 28px;
+					border-radius: var(--vf-radius-sm);
+					color: var(--vf-text-mute);
+
+					&[data-active="true"] {
+						background: var(--vf-surface);
+						color: var(--vf-primary);
+					}
+
+					svg { pointer-events: none; }
+				}
+			}
+
+			vf-sidebar-title {
+				display: block;
+				flex: 1;
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--vf-text);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				cursor: default;
+
+				&:hover {
+					color: var(--vf-text);
+					text-decoration: underline dotted var(--vf-text-mute);
+				}
+			}
+		}
+
+		vf-sidebar-section {
+			display: flex;
+			flex-direction: column;
+			border-bottom: 1px solid var(--vf-panel-border);
+
+			vf-sidebar-section-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 10px 16px;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--vf-text-dim);
+				font-weight: 600;
+				cursor: pointer;
+				gap: 8px;
+
+				& > span:first-child {
+					flex: 1 1 auto;
+					min-width: 0;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+
+				&:hover {
+					color: var(--vf-text);
+				}
+
+				&[data-static="true"] {
+					cursor: default;
+
+					&:hover {
+						color: var(--vf-text-dim);
+					}
+				}
+
+				vf-sidebar-section-action {
+					display: inline-flex;
+					align-items: center;
+					flex: 0 0 auto;
+				}
+
+				vf-effect-order-buttons {
+					display: inline-flex;
+					align-items: center;
+					gap: 0;
+
+					button[data-variant="icon"] {
+						width: 22px;
+						height: 22px;
+						font-size: 14px;
+						line-height: 1;
+					}
+				}
+
+				vf-sidebar-section-chevron {
+					display: inline-block;
+					font-size: 14px;
+					line-height: 1;
+					transition: transform 0.15s;
+					flex: 0 0 auto;
+					color: var(--vf-text-dim);
+				}
+			}
+
+			.vf-three-d-toggle {
+				all: unset;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				height: 18px;
+				padding: 0 6px;
+				border-radius: 4px;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.05em;
+				color: var(--vf-text-mute);
+				background: var(--vf-input-bg, rgba(255, 255, 255, 0.04));
+				border: 1px solid var(--vf-panel-border);
+				cursor: pointer;
+				transition: color 0.12s, background 0.12s, border-color 0.12s;
+
+				&:hover {
+					color: var(--vf-text);
+					border-color: var(--vf-text-dim);
+				}
+
+				&[data-active="true"] {
+					color: var(--vf-bg, #111);
+					background: var(--vf-accent, #8b8cff);
+					border-color: var(--vf-accent, #8b8cff);
+				}
+			}
+
+			&[data-collapsed="true"] {
+				vf-sidebar-section-body {
+					display: none;
+				}
+				vf-sidebar-section-chevron {
+					transform: rotate(-90deg);
+				}
+			}
+
+			vf-sidebar-section-body {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				padding: 4px 16px 14px;
+			}
+		}
+
+		/* Effect picker — rendered directly inside `vf-sidebar` (not
+		 * inside a `vf-sidebar-section`), anchored to the `+ Add effect`
+		 * button via the relatively-positioned wrapper around it. */
+		vf-effect-popover {
+			display: flex;
+			flex-direction: column;
+			position: absolute;
+			top: calc(100% + 4px);
+			left: 0;
+			right: 0;
+			background: var(--vf-panel-2);
+			border: 1px solid var(--vf-panel-border);
+			border-radius: var(--vf-radius);
+			box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+			z-index: 20;
+			max-height: 320px;
+			overflow-y: auto;
+			padding: 4px;
+			padding-top:0px;
+		}
+	}
+
+	/* ---- Property row (label + input) -------------------------- */
+	vf-property {
+		display: grid;
+		grid-template-columns: 86px 1fr;
+		align-items: center;
+		gap: 10px;
+		min-height: 28px;
+
+		> label {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			font-size: 11px;
+			color: var(--vf-text-dim);
+			min-width: 0;
+			line-height: 1.25;
+			overflow-wrap: anywhere;
+			word-break: normal;
+
+			> span {
+				flex: 1;
+				min-width: 0;
+			}
+		}
+
+		vf-property-input {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			min-width: 0;
+		}
+
+		&[data-full="true"] {
+			grid-template-columns: 1fr;
+
+			> label {
+				margin-bottom: 4px;
+			}
+		}
+	}
+
+	/* ---- Read-only value display (e.g. derived duration) --------- */
+	vf-sidebar-readonly {
+		display: inline-flex;
+		align-items: center;
+		height: 26px;
+		padding: 0 8px;
+		color: var(--vf-text-dim);
+		font-family: var(--vf-font-mono);
+		font-size: 11px;
+	}
+
+	/* ================================================================
+	 *  Input components
+	 * ================================================================ */
+
+	/* ---- Text input ---- */
+	vf-input-text {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+
+		input {
+			flex: 1;
+			min-width: 0;
+			background: var(--vf-surface);
+			border: 1px solid var(--vf-panel-border);
+			color: var(--vf-text);
+			padding: 5px 8px;
+			border-radius: var(--vf-radius);
+			font-size: 12px;
+			font-family: inherit;
+			outline: none;
+
+			&:hover {
+				border-color: var(--vf-surface-active);
+			}
+
+			&:focus {
+				border-color: var(--vf-primary);
+				background: var(--vf-surface-2);
+			}
+		}
+	}
+
+	/* ---- Textarea ---- */
+	vf-input-textarea {
+		display: flex;
+		flex: 1;
+
+		textarea {
+			flex: 1;
+			min-width: 0;
+			background: var(--vf-surface);
+			border: 1px solid var(--vf-panel-border);
+			color: var(--vf-text);
+			padding: 6px 8px;
+			border-radius: var(--vf-radius);
+			font-size: 12px;
+			font-family: inherit;
+			resize: vertical;
+			min-height: 56px;
+			outline: none;
+
+			&:focus {
+				border-color: var(--vf-primary);
+			}
+		}
+	}
+
+	/* ---- Number input (drag-to-scrub + arrow keys) ---- */
+	vf-input-number {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+		align-items: stretch;
+		background: var(--vf-surface);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius);
+		overflow: hidden;
+		position: relative;
+
+		&:hover {
+			border-color: var(--vf-surface-active);
+		}
+
+		&:focus-within {
+			border-color: var(--vf-primary);
+			background: var(--vf-surface-2);
+		}
+
+		&[data-mini="true"] {
+			> vf-input-number-label {
+				padding: 0 4px 0 6px;
+			}
+		}
+
+		vf-input-number-label {
+			display: flex;
+			align-items: center;
+			padding: 0 6px 0 8px;
+			color: var(--vf-text-mute);
+			font-size: 10px;
+			font-weight: 600;
+			text-transform: uppercase;
+			cursor: ew-resize;
+			user-select: none;
+		}
+
+		input {
+			flex: 1;
+			min-width: 0;
+			background: transparent;
+			border: none;
+			color: var(--vf-text);
+			padding: 5px 6px;
+			font-size: 12px;
+			font-family: var(--vf-font-mono);
+			outline: none;
+			text-align: right;
+			cursor: ew-resize;
+			-moz-appearance: textfield;
+
+			&::-webkit-outer-spin-button,
+			&::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+
+			&:focus {
+				cursor: text;
+			}
+		}
+
+		vf-input-number-unit {
+			display: flex;
+			align-items: center;
+			padding: 0 8px 0 2px;
+			color: var(--vf-text-mute);
+			font-size: 11px;
+			pointer-events: none;
+		}
+	}
+
+	/* ---- Slider ---- */
+	vf-input-slider {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 8px;
+		min-width: 0;
+
+		vf-input-slider-track {
+			display: block;
+			position: relative;
+			flex: 1;
+			min-width: 40px;
+			height: 18px;
+			cursor: pointer;
+
+			&::before {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 0;
+				right: 0;
+				height: 4px;
+				background: var(--vf-surface);
+				border-radius: 2px;
+				transform: translateY(-50%);
+			}
+
+			&::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 0;
+				width: calc(var(--vf-slider-ratio) * 100%);
+				height: 4px;
+				background: var(--vf-primary);
+				border-radius: 2px;
+				transform: translateY(-50%);
+			}
+
+			vf-input-slider-handle {
+				display: block;
+				position: absolute;
+				top: 50%;
+				left: calc(var(--vf-slider-ratio) * 100%);
+				width: 14px;
+				height: 14px;
+				background: #fff;
+				border: 2px solid var(--vf-primary);
+				border-radius: 50%;
+				transform: translate(-50%, -50%);
+				pointer-events: none;
+				box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+				z-index: 1;
+			}
+		}
+
+		vf-input-slider-value {
+			display: block;
+			min-width: 40px;
+			font-family: var(--vf-font-mono);
+			font-size: 11px;
+			color: var(--vf-text-dim);
+			text-align: right;
+		}
+	}
+
+	/* ---- Checkbox / toggle ---- */
+	vf-input-checkbox {
+		display: inline-flex;
+		align-items: center;
+		width: 32px;
+		height: 18px;
+		background: var(--vf-surface);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: 9px;
+		cursor: pointer;
+		transition: background 0.15s, border-color 0.15s;
+		position: relative;
+
+		&::after {
+			content: '';
+			position: absolute;
+			top: 1px;
+			left: 1px;
+			width: 14px;
+			height: 14px;
+			background: var(--vf-text-mute);
+			border-radius: 50%;
+			transition: transform 0.15s, background 0.15s;
+		}
+
+		&[data-checked="true"] {
+			background: var(--vf-primary);
+			border-color: var(--vf-primary);
+
+			&::after {
+				transform: translateX(14px);
+				background: #fff;
+			}
+		}
+	}
+
+	/* ---- Select (dropdown) ---- */
+	vf-input-select {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+		position: relative;
+
+		select {
+			flex: 1;
+			min-width: 0;
+			appearance: none;
+			background: var(--vf-surface);
+			border: 1px solid var(--vf-panel-border);
+			color: var(--vf-text);
+			padding: 5px 24px 5px 8px;
+			border-radius: var(--vf-radius);
+			font-size: 12px;
+			font-family: inherit;
+			outline: none;
+			cursor: pointer;
+
+			&:hover {
+				border-color: var(--vf-surface-active);
+			}
+
+			&:focus {
+				border-color: var(--vf-primary);
+			}
+		}
+
+		&::after {
+			content: '▾';
+			position: absolute;
+			right: 8px;
+			top: 50%;
+			transform: translateY(-50%);
+			color: var(--vf-text-dim);
+			pointer-events: none;
+			font-size: 13px;
+			line-height: 1;
+		}
+	}
+
+	/* ---- Option group (icon/label toggles) ---- */
+	vf-input-options {
+		display: flex;
+		flex: 1;
+		background: var(--vf-surface);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius);
+		overflow: hidden;
+		min-width: 0;
+
+		vf-input-option {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: 1;
+			padding: 5px 6px;
+			cursor: pointer;
+			color: var(--vf-text-dim);
+			font-size: 12px;
+			line-height: 1;
+			border-right: 1px solid var(--vf-panel-border);
+			min-width: 0;
+			white-space: nowrap;
+
+			&:last-child {
+				border-right: none;
+			}
+
+			&:hover {
+				background: var(--vf-surface-hover);
+				color: var(--vf-text);
+			}
+
+			&[data-selected="true"] {
+				background: var(--vf-primary);
+				color: var(--vf-primary-fg);
+			}
+		}
+	}
+
+	/* ---- Color input ---- */
+	vf-input-color {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 6px;
+		background: var(--vf-surface);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius);
+		padding: 3px;
+		min-width: 0;
+		position: relative;
+
+		&:hover {
+			border-color: var(--vf-surface-active);
+		}
+
+		&:focus-within {
+			border-color: var(--vf-primary);
+		}
+
+		vf-input-color-swatch {
+			display: block;
+			width: 22px;
+			height: 22px;
+			border-radius: 4px;
+			background:
+				linear-gradient(var(--vf-color), var(--vf-color)),
+				conic-gradient(#ccc 25%, #fff 25%, #fff 50%, #ccc 50%, #ccc 75%, #fff 75%) 0 0 / 8px 8px;
+			cursor: pointer;
+			flex-shrink: 0;
+			position: relative;
+			overflow: hidden;
+			box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+
+			&[data-open="true"] {
+				box-shadow: inset 0 0 0 1px var(--vf-primary);
+			}
+		}
+
+		vf-input-color-popup {
+			position: absolute;
+			top: calc(100% + 4px);
+			right: 0;
+			z-index: 20;
+			border-radius: 6px;
+			overflow: hidden;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+		}
+
+		input[type="text"] {
+			flex: 1;
+			min-width: 0;
+			background: transparent;
+			border: none;
+			color: var(--vf-text);
+			font-family: var(--vf-font-mono);
+			font-size: 11px;
+			padding: 0 4px;
+			outline: none;
+			text-transform: uppercase;
+		}
+	}
+
+	/* ---- Vector (2D pair of number inputs) ---- */
+	vf-input-vector {
+		display: flex;
+		flex: 1;
+		gap: 4px;
+		min-width: 0;
+
+		vf-input-number {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
+	/* ---- Font picker ---- */
+	vf-input-font {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+		position: relative;
+
+		> button {
+			flex: 1;
+			min-width: 0;
+			justify-content: space-between;
+			padding: 5px 8px;
+			font-family: var(--vf-font-current, inherit);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+
+			span {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			span[aria-hidden="true"] {
+				color: var(--vf-text-dim);
+				font-size: 13px;
+				line-height: 1;
+				flex: 0 0 auto;
+			}
+		}
+
+		vf-input-font-popup {
+			display: flex;
+			flex-direction: column;
+			position: absolute;
+			top: calc(100% + 4px);
+			right: 0;
+			width: 300px;
+			max-height: 380px;
+			background: var(--vf-panel-2);
+			border: 1px solid var(--vf-panel-border);
+			border-radius: var(--vf-radius);
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+			overflow: hidden;
+
+			> input {
+				background: var(--vf-surface);
+				border: none;
+				border-bottom: 1px solid var(--vf-panel-border);
+				color: var(--vf-text);
+				padding: 8px 10px;
+				font-family: inherit;
+				font-size: 12px;
+				outline: none;
+			}
+
+			vf-input-font-categories {
+				display: flex;
+				gap: 2px;
+				padding: 6px 8px;
+				background: var(--vf-panel);
+				border-bottom: 1px solid var(--vf-panel-border);
+
+				button {
+					flex: 1;
+					min-width: 0;
+					padding: 4px 6px;
+					background: transparent;
+					border: 1px solid transparent;
+					border-radius: 3px;
+					color: var(--vf-text-dim);
+					cursor: pointer;
+					font-size: 10px;
+					font-family: inherit;
+
+					&:hover {
+						color: var(--vf-text);
+						background: var(--vf-surface);
+					}
+
+					&[data-selected="true"] {
+						background: var(--vf-primary);
+						color: var(--vf-primary-fg);
+						border-color: var(--vf-primary);
+					}
+				}
+			}
+
+			vf-input-font-list {
+				display: flex;
+				flex-direction: column;
+				overflow-y: auto;
+				flex: 1;
+				scroll-behavior: auto;
+
+				vf-input-font-item {
+					display: block;
+					flex: 0 0 auto;
+					padding: 8px 10px;
+					cursor: pointer;
+					font-size: 14px;
+					border-bottom: 1px solid var(--vf-panel-border);
+					color: var(--vf-text);
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+
+					&:hover {
+						background: var(--vf-surface);
+					}
+
+					&[data-loading="true"] {
+						color: var(--vf-text-mute);
+						cursor: wait;
+					}
+
+					&[data-selected="true"] {
+						background: var(--vf-primary);
+						color: var(--vf-primary-fg);
+					}
+				}
+			}
+		}
+	}
+
+	/* ---- Keyframe diamond in property label ---- */
+	vf-keyframe-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		width: 18px;
+		height: 18px;
+		color: var(--vf-text-mute);
+		font-size: 13px;
+		flex-shrink: 0;
+		transition: color 0.15s;
+
+		.vf-kf-diamond {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			cursor: pointer;
+			opacity: 0.4;
+			transition: opacity 0.15s;
+		}
+
+		&:hover .vf-kf-diamond {
+			opacity: 1;
+			color: var(--vf-text);
+		}
+
+		&[data-state="active"] {
+			color: var(--vf-primary);
+
+			.vf-kf-diamond {
+				opacity: 1;
+			}
+		}
+
+		&[data-state="at-keyframe"] {
+			color: #eab308;
+
+			.vf-kf-diamond {
+				opacity: 1;
+			}
+		}
+
+		/*
+		 * Popover sits on top of the diamond. Centered via `left: 50%` +
+		 * `translateX(-50%)` so the middle diamond in the popover aligns
+		 * pixel-perfectly with the original — arrows flank it without
+		 * shifting any surrounding layout.
+		 */
+		vf-keyframe-popover {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			padding: 2px;
+			gap: 2px;
+			background: var(--vf-panel);
+			border: 1px solid var(--vf-panel-border);
+			border-radius: 5px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+			z-index: 10;
+			color: inherit;
+		}
+
+		.vf-kf-arrow {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			padding: 0;
+			border: none;
+			background: none;
+			color: var(--vf-text);
+			cursor: pointer;
+			font-size: 18px;
+			line-height: 1;
+			border-radius: 3px;
+
+			&:hover:not(:disabled) {
+				background: var(--vf-surface-active);
+			}
+
+			&:disabled {
+				opacity: 0.3;
+				cursor: default;
+			}
+		}
+	}
+
+	/* ================================================================
+	 *  Timeline
+	 * ================================================================ */
+	vf-timeline {
+		grid-area: timeline;
+		display: grid;
+		grid-template-columns: var(--vf-timeline-header-width) 1fr;
+		grid-template-rows: var(--vf-ruler-height) 1fr;
+		background: var(--vf-panel);
+		border-radius: var(--vf-radius-lg);
+		overflow: hidden;
+		min-height: 0;
+		position: relative;
+
+		/* Invisible drag bar at the top edge — sets `--vf-timeline-height`
+		 * on the editor root while the user drags. Sits above the corner /
+		 * ruler so the cursor changes when hovering the very top edge. */
+		vf-timeline-resize {
+			position: absolute;
+			top: -3px;
+			left: 0;
+			right: 0;
+			height: 6px;
+			cursor: ns-resize;
+			z-index: 10;
+			background: transparent;
+			touch-action: none;
+		}
+
+		vf-timeline-corner {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0 8px;
+			background: var(--vf-panel-2);
+			border-right: 1px solid var(--vf-panel-border);
+			border-bottom: 1px solid var(--vf-panel-border);
+		}
+
+		vf-timeline-timecode {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			font-family: var(--vf-font-mono);
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--vf-text);
+			cursor: ew-resize;
+			user-select: none;
+
+			input {
+				background: transparent;
+				border: none;
+				color: inherit;
+				font: inherit;
+				outline: none;
+				width: 100%;
+				text-align: center;
+			}
+		}
+
+		vf-timeline-ruler {
+			display: block;
+			position: relative;
+			background: var(--vf-panel-2);
+			border-bottom: 1px solid var(--vf-panel-border);
+			overflow: hidden;
+			cursor: crosshair;
+
+			vf-timeline-ruler-inner {
+				display: block;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 0;
+			}
+
+			vf-timeline-ruler-tick {
+				display: block;
+				position: absolute;
+				top: 14px;
+				bottom: 0;
+				width: 1px;
+				background: var(--vf-panel-border);
+				pointer-events: none;
+
+				&[data-major="true"] {
+					top: 8px;
+					background: var(--vf-text-mute);
+				}
+			}
+
+			vf-timeline-ruler-label {
+				display: block;
+				position: absolute;
+				top: 4px;
+				color: var(--vf-text-dim);
+				font-size: 10px;
+				font-family: var(--vf-font-mono);
+				pointer-events: none;
+				transform: translateX(3px);
+				white-space: nowrap;
+			}
+		}
+
+		/* Single scrollable body containing headers (sticky) + tracks */
+		vf-timeline-body {
+			display: flex;
+			align-items: flex-start;
+			grid-column: 1 / -1;
+			overflow: auto;
+			position: relative;
+			background: var(--vf-panel);
+
+			&::-webkit-scrollbar {
+				width: 10px;
+				height: 10px;
+			}
+			&::-webkit-scrollbar-track {
+				background: var(--vf-panel-2);
+			}
+			&::-webkit-scrollbar-thumb {
+				background: var(--vf-surface);
+				border: 2px solid var(--vf-panel-2);
+				border-radius: 5px;
+			}
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--vf-surface-hover);
+			}
+			&::-webkit-scrollbar-corner {
+				background: var(--vf-panel-2);
+			}
+		}
+
+		vf-timeline-headers {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			background: var(--vf-panel-2);
+			border-right: 1px solid var(--vf-panel-border);
+			position: sticky;
+			left: 0;
+			z-index: 2;
+			flex: none;
+			width: var(--vf-timeline-header-width);
+			min-height: 100%;
+
+			vf-timeline-track-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 0 10px 0 12px;
+				height: var(--vf-track-height);
+				color: var(--vf-text-dim);
+				font-size: 11px;
+				background: var(--vf-panel);
+
+				&:nth-child(even) {
+					background: var(--vf-panel-2);
+				}
+
+				&[data-disabled='true'] {
+					opacity: 0.45;
+				}
+
+				vf-timeline-track-label {
+					display: flex;
+					align-items: center;
+					flex: 1;
+					min-width: 0;
+
+					input {
+						display: block;
+						width: 100%;
+						padding: 2px 4px;
+						background: transparent;
+						border: 1px solid transparent;
+						border-radius: 3px;
+						color: var(--vf-text);
+						font: inherit;
+						font-weight: 500;
+						outline: none;
+						text-overflow: ellipsis;
+
+						&:hover {
+							border-color: var(--vf-panel-border);
+						}
+
+						&:focus {
+							border-color: var(--vf-accent);
+							background: var(--vf-panel);
+						}
+					}
+				}
+
+				vf-timeline-track-toggles {
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					flex: none;
+
+					button {
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
+						width: 20px;
+						height: 20px;
+						padding: 0;
+						background: transparent;
+						border: 1px solid transparent;
+						border-radius: 3px;
+						color: var(--vf-text-dim);
+						font-size: 11px;
+						cursor: pointer;
+
+						&:hover {
+							background: var(--vf-surface);
+							color: var(--vf-text);
+						}
+
+						&[data-active='false'] {
+							color: var(--vf-text-mute);
+						}
+
+						&[data-active='true'] {
+							color: var(--vf-accent);
+						}
+					}
+
+					vf-timeline-track-count {
+						display: block;
+						margin-left: 2px;
+						color: var(--vf-text-mute);
+						font-size: 10px;
+						white-space: nowrap;
+					}
+				}
+			}
+		}
+
+		vf-timeline-tracks-inner {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			position: relative;
+			flex-grow: 1;
+			min-height: 100%;
+		}
+
+		vf-timeline-track {
+			display: block;
+			position: relative;
+			height: var(--vf-track-height);
+			background: var(--vf-panel);
+
+			&:nth-child(even) {
+				background: var(--vf-panel-2);
+			}
+
+			&[data-disabled='true'] {
+				opacity: 0.45;
+			}
+		}
+
+		vf-timeline-layer {
+			display: flex;
+			align-items: center;
+			position: absolute;
+			top: 5px;
+			bottom: 5px;
+			background: linear-gradient(180deg, var(--vf-surface-2), var(--vf-surface));
+			border: 1px solid var(--vf-panel-border);
+			border-radius: var(--vf-radius);
+			padding: 0 8px;
+			cursor: grab;
+			color: var(--vf-text);
+			font-size: 11px;
+			overflow: hidden;
+			white-space: nowrap;
+			transition: border-color 0.12s, box-shadow 0.12s;
+			min-width: 6px;
+
+			&:hover {
+				border-color: var(--vf-surface-active);
+			}
+
+			&[data-selected="true"] {
+				border-color: var(--vf-selection);
+				background: linear-gradient(180deg, var(--vf-selection-dim), var(--vf-surface));
+				box-shadow: 0 0 0 1px var(--vf-selection-ring);
+				z-index: 2;
+			}
+
+			&[data-disabled="true"] {
+				opacity: 0.45;
+			}
+
+			&:active {
+				cursor: grabbing;
+			}
+
+			vf-timeline-layer-handle {
+				display: block;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				width: 6px;
+				cursor: ew-resize;
+				background: transparent;
+				/* Above `vf-timeline-layer-transition` (z-index: 2) so the
+				 * trim handle's 6px strip wins pointer events even when a
+				 * transition's ramp triangle (`::before`) overlaps it. */
+				z-index: 3;
+
+				&[data-edge="start"] { left: 0; }
+				&[data-edge="end"] { right: 0; }
+
+				&:hover {
+					background: var(--vf-primary);
+				}
+			}
+
+			vf-timeline-layer-label {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				flex: 1;
+				pointer-events: none;
+				overflow: hidden;
+				text-overflow: ellipsis;
+
+				vf-timeline-layer-type {
+					display: inline-block;
+					padding: 1px 5px;
+					font-size: 9px;
+					text-transform: uppercase;
+					background: rgba(255, 255, 255, 0.08);
+					border-radius: 3px;
+					color: var(--vf-text-dim);
+					flex-shrink: 0;
+				}
+
+				vf-timeline-layer-name {
+					display: block;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+			}
+
+			vf-timeline-layer-keyframes {
+				display: block;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				pointer-events: none;
+
+				vf-timeline-layer-keyframe {
+					display: block;
+					position: absolute;
+					top: 50%;
+					transform: translate(-50%, -50%);
+					font-size: 8px;
+					color: var(--vf-primary);
+					line-height: 1;
+					opacity: 0.7;
+					pointer-events: none;
+				}
+			}
+
+			vf-timeline-layer-transition {
+				display: block;
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				pointer-events: none; /* re-enabled on ::before which is the actual shape */
+				z-index: 2;
+
+				/* The ramp triangle — pointer events land here */
+				&::before {
+					content: '';
+					display: block;
+					position: absolute;
+					inset: 0;
+					pointer-events: auto;
+					cursor: default;
+					background: rgba(0, 0, 0, 0.28);
+					transition: background 0.1s;
+				}
+
+				/* Circle handle — rendered as a child div so React can attach events */
+				.vf-tl-transition-handle {
+					position: absolute;
+					width: 10px;
+					height: 10px;
+					border-radius: 50%;
+					background: #fff;
+					opacity: 0.75;
+					top: -5px;
+					pointer-events: auto;
+					cursor: ew-resize;
+					transition: opacity 0.1s, transform 0.1s;
+					box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+					z-index: 1;
+				}
+
+				&[data-edge="start"] {
+					left: 0;
+					&::before {
+						/* Upper triangle: full at left, tapers to top-right */
+						clip-path: polygon(0% 0%, 100% 0%, 0% 100%);
+					}
+					.vf-tl-transition-handle { right: -5px; }
+				}
+
+				&[data-edge="end"] {
+					right: 0;
+					&::before {
+						/* Upper triangle: full at right, tapers to top-left */
+						clip-path: polygon(0% 0%, 100% 0%, 100% 100%);
+					}
+					.vf-tl-transition-handle { left: -5px; }
+				}
+
+				&:hover::before {
+					background: rgba(0, 0, 0, 0.45);
+				}
+
+				&:hover .vf-tl-transition-handle,
+				.vf-tl-transition-handle:hover {
+					opacity: 1;
+					transform: scale(1.2);
+				}
+			}
+		}
+
+		vf-timeline-playhead {
+			display: block;
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 2px;
+			background: var(--vf-playhead);
+			pointer-events: none;
+			/* Must stay below vf-timeline-headers (z-index: 2 on the sticky
+			 * headers column) so the sticky column covers the playhead line
+			 * when it scrolls past the left edge. */
+			z-index: 1;
+			box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+		}
+
+		/* Subtle marker at the video's duration so the trailing empty area
+		 * past the end is visually distinct from the playable range. */
+		vf-timeline-end-marker {
+			display: block;
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 0;
+			border-left: 1px dashed var(--vf-text-mute);
+			opacity: 0.55;
+			pointer-events: none;
+			z-index: 0;
+		}
+
+		/* Add-layer placeholder — a dashed ghost block that follows the cursor
+		 * in empty track space and opens a layer-type picker on click. */
+		vf-timeline-add-placeholder {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			position: absolute;
+			box-sizing: border-box;
+			padding: 5px 0;
+			background: color-mix(in srgb, var(--vf-primary) 10%, transparent);
+			border: 1px dashed color-mix(in srgb, var(--vf-primary) 55%, transparent);
+			border-radius: var(--vf-radius);
+			color: var(--vf-text-dim);
+			font-size: 11px;
+			cursor: pointer;
+			z-index: 1;
+			pointer-events: auto;
+			user-select: none;
+
+			&:hover, &[data-active="true"] {
+				background: color-mix(in srgb, var(--vf-primary) 18%, transparent);
+				border-color: var(--vf-primary);
+				color: var(--vf-text);
+			}
+
+			& > span {
+				pointer-events: none;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				padding: 0 6px;
+			}
+		}
+
+	}
+
+	/* ================================================================
+	 *  Timeline add-layer popover — portalled to the `<vf-editor>` root
+	 *  so it escapes `vf-timeline`'s `overflow: hidden`. Lives at the
+	 *  editor scope (not nested under `vf-timeline`) because the portal
+	 *  target is the editor element itself. Positioned via inline styles
+	 *  (`position: fixed` + viewport-coord top/left from the anchor's
+	 *  getBoundingClientRect()).
+	 * ================================================================ */
+	vf-timeline-add-backdrop {
+		/* Full-viewport invisible click-catcher that closes the popover on
+		 * outside clicks. Using a backdrop rather than a document-level
+		 * listener avoids re-registration races with the timeline's frequent
+		 * re-renders during playback and scrub. */
+		position: fixed;
+		inset: 0;
+		z-index: 29;
+		background: transparent;
+		cursor: default;
+	}
+
+	vf-timeline-add-popover {
+		display: flex;
+		flex-direction: column;
+		min-width: 140px;
+		background: var(--vf-panel-2);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius);
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+		z-index: 30;
+		overflow: hidden;
+		padding: 4px;
+		cursor: default;
+
+		button {
+			width: 100%;
+			justify-content: flex-start;
+			padding: 6px 10px;
+			text-align: left;
+			font-size: 13px;
+		}
+
+		.vf-tl-add-arrow {
+			display: inline-block;
+			font-size: 16px;
+			line-height: 1;
+			color: var(--vf-text-dim);
+		}
+	}
+
+	/* ================================================================
+	 *  Playbar — between preview and timeline
+	 * ================================================================ */
+	vf-playbar {
+		grid-area: playbar;
+		/* Three-column layout: left (reserved), centered transport, right zoom.
+		 * The 1fr side columns make the centre group sit in the middle of the
+		 * bar regardless of how much the right group grows. */
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		padding: 0 12px;
+		background: var(--vf-panel);
+		border-radius: var(--vf-radius-lg);
+
+		vf-playbar-group {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		vf-playbar-group[data-role='transport'] {
+			justify-self: center;
+		}
+
+		vf-playbar-group[data-role='zoom'] {
+			justify-self: end;
+		}
+
+		vf-playbar-sep {
+			display: block;
+			width: 1px;
+			height: 18px;
+			background: var(--vf-panel-border);
+			margin: 0 4px;
+		}
+
+		vf-playbar-zoom {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			padding: 3px 8px;
+			background: var(--vf-surface);
+			border: 1px solid var(--vf-panel-border);
+			border-radius: var(--vf-radius-sm);
+			font-size: 11px;
+			color: var(--vf-text-dim);
+			cursor: pointer;
+			font-family: var(--vf-font-mono);
+
+			&:hover {
+				background: var(--vf-surface-hover);
+				color: var(--vf-text);
+			}
+		}
+	}
+
+	/* ================================================================
+	 *  Export modal
+	 * ================================================================ */
+	vf-modal-backdrop {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.7);
+		z-index: 100;
+		backdrop-filter: blur(2px);
+	}
+
+	vf-modal {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+		background: var(--vf-panel);
+		border: 1px solid var(--vf-panel-border);
+		border-radius: var(--vf-radius-lg);
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+		width: 420px;
+		max-width: calc(100% - 32px);
+		overflow: hidden;
+
+		vf-modal-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 18px 20px 14px;
+			border-bottom: 1px solid var(--vf-panel-border);
+
+			vf-modal-title {
+				display: block;
+				font-size: 15px;
+				font-weight: 600;
+				color: var(--vf-text);
+			}
+		}
+
+		vf-modal-body {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			padding: 20px;
+		}
+
+		vf-modal-footer {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 8px;
+			padding: 14px 20px;
+			border-top: 1px solid var(--vf-panel-border);
+		}
+
+		vf-modal-progress {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+
+			vf-modal-progress-bar {
+				display: block;
+				height: 6px;
+				background: var(--vf-surface);
+				border-radius: 3px;
+				overflow: hidden;
+
+				vf-modal-progress-fill {
+					display: block;
+					height: 100%;
+					background: var(--vf-primary);
+					border-radius: 3px;
+					transition: width 0.15s;
+				}
+			}
+
+			vf-modal-progress-label {
+				display: block;
+				font-size: 12px;
+				color: var(--vf-text-dim);
+				text-align: center;
+			}
+		}
+	}
+}

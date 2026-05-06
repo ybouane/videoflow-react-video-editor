@@ -1,0 +1,1 @@
+import{jsx as o}from"react/jsx-runtime";function a({value:e,onChange:r,disabled:c,title:i,mixed:t}){return o("vf-input-checkbox",{role:"switch","aria-checked":t?"mixed":e,"data-checked":t?"mixed":e?"true":"false","data-disabled":c?"true":void 0,title:i,onClick:()=>{c||r(t?!0:!e)}})}export{a as Checkbox};
