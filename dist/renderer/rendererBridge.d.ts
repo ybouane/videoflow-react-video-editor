@@ -61,6 +61,18 @@ export declare class RendererBridge {
      * sees the effective visibility state without mutating the store.
      */
     setVideo(video: VideoJSON): Promise<void>;
+    /**
+     * Replace the renderer's video and then render a specific frame, both
+     * inside a single `opQueue` task. Use this instead of `setVideo` + `seek`
+     * whenever the playhead should land somewhere other than frame 0 after
+     * the reload — `loadVideo` always re-renders frame 0 internally, so a
+     * follow-up `seek` is needed (and chaining via two separate
+     * `enqueue` calls can interleave with a later mutation arriving on the
+     * queue in between). Group enter/exit and any commit that reloads the
+     * synthetic group video go through this so the user keeps seeing their
+     * actual playhead frame, not frame 0.
+     */
+    setVideoAndSeek(video: VideoJSON, frame: number): Promise<void>;
     private loadVideoInternal;
     /**
      * Apply a store commit to the live preview.
