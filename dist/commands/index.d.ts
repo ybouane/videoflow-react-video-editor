@@ -173,7 +173,7 @@ export declare function setTransitionParamCommand(commit: CommitFn, id: string, 
 /** Append a new effect entry to the layer's effects array. */
 export declare function addEffectCommand(commit: CommitFn, id: string, effectName: string): Promise<void>;
 /** Remove an effect by index. Also clears any animation tracks for its params. */
-export declare function removeEffectCommand(commit: CommitFn, id: string, index: number, effectName: string): Promise<void>;
+export declare function removeEffectCommand(commit: CommitFn, id: string, index: number): Promise<void>;
 /** Move an effect up or down in the stack. */
 export declare function moveEffectCommand(commit: CommitFn, id: string, fromIdx: number, toIdx: number): Promise<void>;
 /** Toggle an effect's `enabled` flag without removing it from the stack. */
